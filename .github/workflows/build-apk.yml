@@ -17,15 +17,6 @@ jobs:
         with:
           flutter-version: '3.13.6'
 
-      - name: Ensure Flutter project exists (create if missing)
-        run: |
-          if [ ! -d "android" ]; then
-            echo "android folder missing — running flutter create ."
-            flutter create .
-          else
-            echo "android folder exists — skipping flutter create"
-          fi
-
       - name: Install Android SDK components
         run: |
           sudo apt-get update
