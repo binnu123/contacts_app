@@ -20,10 +20,10 @@ jobs:
       - name: Ensure Flutter project exists (create if missing)
         run: |
           if [ ! -d "android" ]; then
-            echo "android folder missing — running flutter create . to generate project skeleton"
+            echo "android folder missing — running flutter create ."
             flutter create .
           else
-            echo "android folder found, skipping flutter create"
+            echo "android folder exists — skipping flutter create"
           fi
 
       - name: Install Android SDK components
@@ -35,22 +35,28 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Restore signing keystore
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+      - name: Restore keystore if secret exists
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/keystore.jks
-          mkdir -p $HOME/.android
-          mv /tmp/keystore.jks $HOME/.android/key.jks
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Keystore secret found — restoring keystore"
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > $HOME/keystore.jks
+            mkdir -p $HOME/.android
+            mv $HOME/keystore.jks $HOME/.android/key.jks
+          else
+            echo "No keystore secret — skipping restore"
+          fi
 
-      - name: Create key.properties for gradle
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+      - name: Create key.properties if keystore exists
         run: |
-          cat > android/key.properties <<EOF
-          storeFile=$HOME/.android/key.jks
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          EOF
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Creating android/key.properties"
+            echo "storeFile=$HOME/.android/key.jks" > android/key.properties
+            echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
+            echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
+            echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+          else
+            echo "No keystore secret — skipping key.properties"
+          fi
 
       - name: Build release APK
         run: flutter build apk --release --no-shrink
@@ -60,3 +66,6 @@ jobs:
         with:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
+
+
+          
