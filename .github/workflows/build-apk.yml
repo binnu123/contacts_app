@@ -35,22 +35,32 @@ jobs:
       - name: Get dependencies
         run: flutter pub get
 
-      - name: Restore signing keystore
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      - name: Restore signing keystore (if provided)
         run: |
-          echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/keystore.jks
-          mkdir -p $HOME/.android
-          mv /tmp/keystore.jks $HOME/.android/key.jks
+          # If ANDROID_KEYSTORE_BASE64 is non-empty, decode it and move to $HOME/.android/key.jks
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Keystore secret detected — restoring keystore"
+            echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 --decode > /tmp/keystore.jks
+            mkdir -p $HOME/.android
+            mv /tmp/keystore.jks $HOME/.android/key.jks
+          else
+            echo "No ANDROID_KEYSTORE_BASE64 secret provided — skipping keystore restore"
+          fi
 
-      - name: Create key.properties for gradle
-        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+      - name: Create android/key.properties (if keystore present)
         run: |
-          cat > android/key.properties <<EOF
-          storeFile=$HOME/.android/key.jks
-          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
-          keyAlias=${{ secrets.KEY_ALIAS }}
-          keyPassword=${{ secrets.KEY_PASSWORD }}
-          EOF
+          if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "Creating android/key.properties from secrets"
+            cat > android/key.properties <<EOF
+storeFile=$HOME/.android/key.jks
+storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+keyAlias=${{ secrets.KEY_ALIAS }}
+keyPassword=${{ secrets.KEY_PASSWORD }}
+EOF
+            echo "key.properties created"
+          else
+            echo "No keystore secret — skipping key.properties creation"
+          fi
 
       - name: Build release APK
         run: flutter build apk --release --no-shrink
