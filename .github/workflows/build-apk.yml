@@ -12,10 +12,16 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Flutter
+      - name: Set up Flutter (pinned)
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.13.6'
+
+      - name: Confirm flutter & disable telemetry
+        run: |
+          flutter --version
+          # disable analytics/telemetry to prevent interactive prompt
+          flutter config --no-analytics
 
       - name: Install Android SDK components
         run: |
@@ -34,17 +40,17 @@ jobs:
             mkdir -p $HOME/.android
             mv $HOME/keystore.jks $HOME/.android/key.jks
           else
-            echo "No keystore secret — skipping restore"
+            echo "No ANDROID_KEYSTORE_BASE64 secret — skipping keystore restore"
           fi
 
-      - name: Create key.properties if keystore exists
+      - name: Create android/key.properties if keystore present
         run: |
           if [ -n "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
-            echo "Creating android/key.properties"
             echo "storeFile=$HOME/.android/key.jks" > android/key.properties
             echo "storePassword=${{ secrets.KEYSTORE_PASSWORD }}" >> android/key.properties
             echo "keyAlias=${{ secrets.KEY_ALIAS }}" >> android/key.properties
             echo "keyPassword=${{ secrets.KEY_PASSWORD }}" >> android/key.properties
+            echo "Created android/key.properties"
           else
             echo "No keystore secret — skipping key.properties"
           fi
@@ -57,5 +63,3 @@ jobs:
         with:
           name: app-release
           path: build/app/outputs/flutter-apk/app-release.apk
-
-
