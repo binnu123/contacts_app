@@ -36,14 +36,14 @@ jobs:
         run: flutter pub get
 
       - name: Restore signing keystore
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
           echo "$ANDROID_KEYSTORE_BASE64" | base64 --decode > /tmp/keystore.jks
           mkdir -p $HOME/.android
           mv /tmp/keystore.jks $HOME/.android/key.jks
 
       - name: Create key.properties for gradle
-        if: secrets.ANDROID_KEYSTORE_BASE64 != ''
+        if: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
         run: |
           cat > android/key.properties <<EOF
           storeFile=$HOME/.android/key.jks
