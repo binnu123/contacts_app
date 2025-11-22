@@ -1,0 +1,19 @@
+name: contact_backup_app
+description: A simple Contact Backup app that exports contacts as JSON and lets you share the file.
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=2.18.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  contacts_service: ^0.6.3
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.5
+  share_plus: ^10.1.0
+  file_picker: ^5.2.4
+
+flutter:
+  uses-material-design: true
