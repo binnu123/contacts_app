@@ -23,12 +23,17 @@ jobs:
           # disable analytics/telemetry to prevent interactive prompt
           flutter config --no-analytics
 
-      - name: Install Android SDK components
+      - name: Set up Android SDK
         run: |
           sudo apt-get update
-          yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-33" "build-tools;33.0.2"
-
+          sudo apt-get install -y unzip
+          wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+          unzip -q cmdline-tools.zip -d $HOME/cmdline-tools
+          mkdir -p $HOME/android-sdk/cmdline-tools
+          mv $HOME/cmdline-tools $HOME/android-sdk/cmdline-tools/latest
+          echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+          echo "PATH=$HOME/android-sdk/cmdline-tools/latest/bin:$PATH" >> $GITHUB_ENV
+      
       - name: Get dependencies
         run: flutter pub get
 
